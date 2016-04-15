@@ -2,7 +2,7 @@ import os
 
 BOT_NAME = 'scraper'
 
-LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'DEBUG'
 
 SPIDER_MODULES = ['source.spiders']
 
