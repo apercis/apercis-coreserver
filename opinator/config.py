@@ -6,7 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 LIFESPAN = 60
 
 # Mapping of website_name to spider name
-WEBSITE_TO_SPIDER = {'amazonIN': 'amazonin'}
+WEBSITE_TO_SPIDER = {'amazonIN': 'amazonin', 'flipkartcom': 'flipkart'}
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/opinator'
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
