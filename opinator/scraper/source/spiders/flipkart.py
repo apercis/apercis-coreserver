@@ -15,11 +15,8 @@ class Flipkart(scrapy.spiders.CrawlSpider):
 
     name = 'flipkartcom'
     allowed_domains = ['www.flipkart.com']
-    #start_url_frame = 'http://www.amazon.in/gp/product/'
 
-    def __init__(self, product_id, url, **kwargs):
-        self.product_id = product_id
-        #self.start_urls = [self.start_url_frame + str(self.product_id)]
+    def __init__(self, url, **kwargs):
         self.start_urls = [url]
 
         review_page_link_extractor_regex = [r'.*/product-reviews/.*']
@@ -58,7 +55,7 @@ class Flipkart(scrapy.spiders.CrawlSpider):
             )
         ]
 
-        super(Flipkart, self).__init__(product_id, **kwargs)
+        super(Flipkart, self).__init__(url, **kwargs)
 
     def parse_items(self, response):
         hxs = scrapy.Selector(response)
