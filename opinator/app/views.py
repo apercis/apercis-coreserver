@@ -1,27 +1,24 @@
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
-
-import pandas as pd
 import os
-from flask import request, url_for
-from flask.json import jsonify
+import flask
+import pandas as pd
 from datetime import datetime, timedelta
 
-from opinator.app import app, db
+import opinator
+import opinator.app
+from opinator.app import app, db, models
 from sentiment import StanfordNLP, VALUES
-from .models import *
 from opinator.config import LIFESPAN, WEBSITE_TO_SPIDER
-from ..analyzer.summary.summary_tool import BushyPath
-from ..analyzer.summary.sums  import SummaryUsingGooglePageRank
+from opinator.analyzer.summary.summary_tool import BushyPath
+from opinator.analyzer.summary.sums  import SummaryUsingGooglePageRank
+
 
 def is_present(website_name, product_id):
     """Checks if the product is already present in the database,
         Return the product object if it is present and None if
         it isn't.
     """
-    return AmazonIN.query.filter(AmazonIN.product_id==product_id).first()
+    return models.AmazonIN.query.filter(models.AmazonIN.product_id==product_id).first()
+
 
 def is_valid(product):
     """Checks if the product's date of view has expired
@@ -41,13 +38,14 @@ def is_valid(product):
     else:
         return False
 
+
 def insert(website_name, product_id, url,
             sentiment_score, sentiment,positive_count,
             negative_count, neutral_count,
             very_positive_count, very_negative_count):
     """Inserts new product in the database"""
 
-    new_product = AmazonIN(product_id=product_id, url=url,
+    new_product = models.AmazonIN(product_id=product_id, url=url,
                             sentiment_score=sentiment_score,
                             sentiment=sentiment, added_on=datetime.now(),
                             modified_on=datetime.now(),
@@ -59,6 +57,7 @@ def insert(website_name, product_id, url,
     db.session.add(new_product)
     db.session.commit()
     return
+
 
 def update(website_name, product_id, url,
             sentiment_score, sentiment, positive_count,
@@ -72,6 +71,7 @@ def update(website_name, product_id, url,
     product.modified_on = datetime.utcnow()
     db.session.commit()
     return
+
 
 def categorize_sentiment(result):
     """Calculates the sum of the sentiments.
@@ -91,6 +91,7 @@ def categorize_sentiment(result):
     else:
         return 'Neutral'
 
+
 def get_sentiment_of_review (review):
     """Calculates the overall sentiment of the reviews"""
 
@@ -108,6 +109,7 @@ def get_sentiment_of_review (review):
     result = results['sentences']
     return categorize_sentiment(result)
 
+
 def execute_scraper_and_move_output_file (website_name, product_id):
     spider_name = WEBSITE_TO_SPIDER[website_name]
     cmd = "scrapy crawl %s -a product_id=%s -o %s.csv" % (spider_name, product_id, product_id)
@@ -122,6 +124,7 @@ def execute_scraper_and_move_output_file (website_name, product_id):
     if not os.path.exists('../REVIEWS/%s/%s.csv' % (product_id, product_id)):
         os.system('mv %s.csv ../REVIEWS/%s/' % (product_id, product_id))
 
+
 def read_output_file(product_id):
     #the scraper outputs the reviews to a csv file,
     #named as product_id.csv in "REVIEW" folder
@@ -129,16 +132,19 @@ def read_output_file(product_id):
     df = pd.read_csv('%s.csv' % (product_id))
     return df
 
+
 def open_files(product_id):
     pos_txt = open('%s_pos.txt' % (product_id), 'a')
     neg_txt = open('%s_neg.txt' % (product_id), 'a')
     neutral_txt = open('%s_neutral.txt' % (product_id), 'a')
     return (pos_txt, neg_txt, neutral_txt)
 
+
 def close_files(pos_txt, neg_txt, neutral_txt):
     pos_txt.close()
     neg_txt.close()
     neutral_txt.close()
+
 
 def categorize_reviews_and_get_counts(df, pos_txt, neg_txt, neutral_txt):
     positive_count, negative_count, neutral_count = 0, 0, 0
@@ -179,6 +185,7 @@ def categorize_reviews_and_get_counts(df, pos_txt, neg_txt, neutral_txt):
     return (positive_count, negative_count, neutral_count, \
                         very_positive_count, very_negative_count)
 
+
 def normalize_counts (positive_count, negative_count, neutral_count, \
                                     very_positive_count, very_negative_count):
     value = VALUES['Positive'] * positive_count + \
@@ -197,12 +204,14 @@ def normalize_counts (positive_count, negative_count, neutral_count, \
     else:
         return (value, 'Neutral')
 
+
 @app.route('/opinator/REVIEWS/<product_id>/google_pos', methods=['GET'])
 def google_pos_summary(product_id):
     product_location = os.path.abspath(os.path.join(os.getcwd(), 'opinator/REVIEWS/%s' % product_id))
     with open(os.path.join(product_location, '%s_google_page_rank_pos.txt' % product_id), 'r') as gp:
         summary = gp.read()
     return '<p>%s</p>' % summary
+
 
 @app.route('/opinator/REVIEWS/<product_id>/google_neg', methods=['GET'])
 def google_neg_summary(product_id):
@@ -211,12 +220,14 @@ def google_neg_summary(product_id):
         summary = gn.read()
     return '<p>%s</p>' % summary
 
+
 @app.route('/opinator/REVIEWS/<product_id>/bushy_pos', methods=['GET'])
 def bushy_pos_summary(product_id):
     product_location = os.path.abspath(os.path.join(os.getcwd(), 'opinator/REVIEWS/%s' % product_id))
     with open(os.path.join(product_location, '%s_bushy_pos.txt' % product_id), 'r') as bp:
         summary = bp.read()
     return '<p>%s</p>' % summary
+
 
 @app.route('/opinator/REVIEWS/<product_id>/bushy_neg', methods=['GET'])
 def bushy_neg_summary(product_id):
@@ -225,14 +236,15 @@ def bushy_neg_summary(product_id):
         summary = bn.read()
     return '<p>%s</p>' % summary
 
+
 @app.route('/', methods=['POST'])
 def plugin_response_handler():
     """It does all the talking with the plugin"""
 
     # Recieving data from the plugin
-    product_id = request.json['product_id']
-    url = request.json['url']
-    website_name = request.json['website_name']
+    product_id = flask.request.json['product_id']
+    url = flask.request.json['url']
+    website_name = flask.request.json['website_name']
 
     #checking if the product was already analyzed
     outdated = False
@@ -254,7 +266,7 @@ def plugin_response_handler():
             with open(google_neg_path, 'r') as gn:
                 google_neg = gn.read()
 
-            jsonout = jsonify({
+            jsonout = flask.jsonify({
                 'sentiment': {
                     'class': str(product.sentiment),
                     'score': str(product.sentiment_score)
@@ -272,8 +284,8 @@ def plugin_response_handler():
                         'negative': bushy_neg,
                     },
                     'google_page_rank': {
-                        'positive': url_for('google_pos_summary', product_id=product_id),
-                        'negative': url_for('google_neg_summary', product_id=product_id),
+                        'positive': flask.url_for('google_pos_summary', product_id=product_id),
+                        'negative': flask.url_for('google_neg_summary', product_id=product_id),
                     }
                 }
             })
@@ -381,7 +393,7 @@ def plugin_response_handler():
     with open(google_neg_path, 'r') as gn:
         google_neg = gn.read()
 
-    jsonout = jsonify({
+    jsonout = flask.jsonify({
         'sentiment': {
             'class': str(sentiment),
             'score': str(sentiment_score)
@@ -399,8 +411,8 @@ def plugin_response_handler():
                 'negative': bushy_neg,
             },
             'google_page_rank': {
-                'positive': url_for('google_pos_summary', product_id=product_id),
-                'negative': url_for('google_neg_summary', product_id=product_id),
+                'positive': flask.url_for('google_pos_summary', product_id=product_id),
+                'negative': flask.url_for('google_neg_summary', product_id=product_id),
             }
         }
     })
