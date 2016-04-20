@@ -4,7 +4,7 @@ import json
 payload = {
         'product_id': 'xyz',
         'website': 'snapdeal.com',
-        'url': 'http://www.snapdeal.com/product/intex-cloud-breeze-8gb-grey/671476050074#bcrumbLabelId:175',
+        'url': 'http://www.snapdeal.com/product/samsung-galaxy-abc-8gb-4g/676860597612#bcrumbLabelId:175',
         'email': 'vivekanand1101@gmail.com',
 }
 

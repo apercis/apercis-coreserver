@@ -1,3 +1,4 @@
+import requests
 import datetime
 import scrapy.item
 import scrapy.selector
