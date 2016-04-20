@@ -1,11 +1,9 @@
 cffi
 characteristic
-cryptography
 cssselect
 decorator
 enum34
 Flask
-Flask-SQLAlchemy
 idna
 ipaddress
 itsdangerous

@@ -3,9 +3,13 @@ import re
 
 class BushyPath(object):
 
-    def __init__(self, input_file, output_file):
-        self.input_file = input_file
-        self.output_file = output_file
+    #def __init__(self, input_file, output_file):
+        #self.input_file = input_file
+        #self.output_file = output_file
+
+    def __init__(self, content):
+        ''' Contents directly send by the server '''
+        self.content = content
 
     # Naive method for splitting a text into sentences
     def split_content_to_sentences(self, content):
@@ -112,27 +116,30 @@ class BushyPath(object):
 
         title = """Title
         """
-        f = open(self.input_file, "r")
-        content = f.read()
-        f.close()
+        #f = open(self.input_file, "r")
+        #content = f.read()
+        #f.close()
 
-        f = open(self.output_file, "wb")
+        #f = open(self.output_file, "wb")
 
-        # Create a SummaryTool object
-        #st = SummaryTool()
+        ## Create a SummaryTool object
+        ##st = SummaryTool()
 
-        # Build the sentences dictionary
-        sentences_dic = self.get_sentences_ranks(content)
+        ## Build the sentences dictionary
+        #sentences_dic = self.get_sentences_ranks(content)
+        sentences_dic = self.get_sentences_ranks(self.content)
+
 
         # Build the summary with the sentences dictionary
-        summary = self.get_summary(title, content, sentences_dic)
+        summary = self.get_summary(title, self.content, sentences_dic)
 
         # Print the summary
         print summary
-        f.write(summary)
+        #f.write(summary)
 
         # Print the ratio between the summary length and the original length
         print ""
-        print "Original Length %s" % (len(title) + len(content))
+        print "Original Length %s" % (len(title) + len(self.content))
         print "Summary Length %s" % len(summary)
-        print "Summary Ratio: %s" % (100 - (100 * (len(summary) / (len(title) + len(content)))))
+        print "Summary Ratio: %s" % (100 - (100 * (len(summary) / (len(title) + len(self.content)))))
+        return summary

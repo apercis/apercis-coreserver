@@ -18,8 +18,9 @@ class Snapdeal(scrapy.spiders.CrawlSpider):
     allowed_domains = ['www.snapdeal.com']
     start_url_frame = 'http://snapdeal.com/product/'
 
-    def __init__(self, url, **kwargs):
+    def __init__(self, url, token, **kwargs):
         self.url = self.clean_url(url)
+        self.token = token
         self.start_urls = [self.url]
 
         pagination_regex_list = [r'http://www.snapdeal.com/product/.*']
@@ -56,6 +57,7 @@ class Snapdeal(scrapy.spiders.CrawlSpider):
         item['reviews'] = self.get_reviews(hxs)
         item['is_verified'] = self.is_verified(hxs)
         item['date'] = self.get_date(hxs)
+        item['token'] = self.token
         next_url = self.__get_next_url(hxs)
         if next_url != '':
             yield Request(next_url, callback=self.parse_items)
@@ -104,3 +106,10 @@ class Snapdeal(scrapy.spiders.CrawlSpider):
             return stars_count.extract[0].strip()
         except IndexError:
             return ''
+
+
+    def closed(self, reason):
+        ''' Method called when the scraper is closed '''
+
+        a = requests.post('http://172.19.13.41:5000/process_reviews', data={'token': self.token})
+        return

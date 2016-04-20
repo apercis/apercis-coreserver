@@ -112,10 +112,7 @@ Temporary Items
 *.py~
 
 #corenlp
-opinator/analyzer/stanford-corenlp-full-2015-04-20/
+analyzer/stanford-corenlp-full-2015-04-20/
 
 *.wsgi
 
-opinator/db_repository
-
-opinator/REVIEWS/
