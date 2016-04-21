@@ -29,3 +29,7 @@ SENTIMENT_SCORES = [
         ('Very Negative', -2),
         ('Neutral', 0)
 ]
+
+MAIL_ID = 'thelatelatif@gmail.com'
+MAIL_PASS = 'alwayslate'
+EMAIL_SEND = True
