@@ -30,18 +30,53 @@ def index():
         except:
             return flask.json.jsonify({'status': False})
 
+        #get the website
+        website_ = opinator.lib.search_website(SESSION, website=website)
+        website_id = website_.id
 
         #check if already processed
         try:
-            product_ = opinator.lib.search_product(SESSION, product_id=product_id)
-            if product_:
-                sentiment = product.sentiment
-                positive_summary = product.positive_summary
-                negative_summary = product.negative_summary
-                return 'somethig later'
+            if website_id == 1:
+                product_ = opinator.lib.search_product(SESSION, product_id=product_id)
+                if product_:
+                    sentiment = product_.sentiment_id
+                    bushy_positive_summary = product_.bushy_positive_summary
+                    bushy_negative_summary = product_.bushy_negative_summary
+                    gr_positive_summary = product_.gr_positive_summary
+                    gr_negative_summary = product_.gr_negative_summary
+                    jsonout = {\
+                            'bushy': {\
+                                'negative': bushy_negative_summary,
+                                'positive': bushy_positive_summary,
+                            },
+                            'google_page_rank': {\
+                                'negative': gr_negative_summary,
+                                'positive': gr_positive_summary,
+                            }
+                    }
+                    return flask.json.jsonify(jsonout)
+            elif website_id == 2 or website_id == 3:
+                product_ = opinator.lib.search_product(SESSION, url=url)
+                if product_:
+                    sentiment = product_.sentiment_id
+                    bushy_positive_summary = product_.bushy_positive_summary
+                    bushy_negative_summary = product_.bushy_negative_summary
+                    gr_positive_summary = product_.gr_positive_summary
+                    gr_negative_summary = product_.gr_negative_summary
+                    jsonout = {\
+                            'bushy': {\
+                                'negative': bushy_negative_summary,
+                                'positive': bushy_positive_summary,
+                            },
+                            'google_page_rank': {\
+                                'negative': gr_negative_summary,
+                                'positive': gr_positive_summary,
+                            }
+                    }
+                    return flask.json.jsonify(jsonout)
         except:
             print 'wrong initialy'
-            pass
+            return 'something sucks'
 
         #generate token for identifying reviews for further processings
         token = opinator.lib.id_generator()
@@ -60,25 +95,22 @@ def index():
         job = requests.post(scrapyd_schedule_url, data=payload)
         job = job.json()
 
-        #get the website
-        website_ = opinator.lib.search_website(SESSION, website=website)
-        website_id = website_.id
-
-        #try:
-        if job['status'] == 'ok':
-            product = models.Product(
-                                product_id=product_id,
-                                url=url,
-                                website_id=website_id,
-                                email=email,
-                                token=token)
-            SESSION.add(product)
-            SESSION.commit()
-        else:
+        try:
+            if job['status'] == 'ok':
+                product = models.Product(
+                                    product_id=product_id,
+                                    url=url,
+                                    website_id=website_id,
+                                    email=email,
+                                    token=token)
+                SESSION.add(product)
+                SESSION.commit()
+            else:
+                return flask.json.jsonify({'status': False})
+        except:
+            print 'SQLALCHEMY error!!!'
+            SESSION.rollback()
             return flask.json.jsonify({'status': False})
-    #except:
-            #print 'SQLALCHEMY error!!!'
-            #return flask.json.jsonify({'status': False})
         return flask.json.jsonify({'status': True})
     return flask.json.jsonify({'status': False})
 
@@ -106,7 +138,7 @@ def process_reviews():
             sentiment_obj = opinator.lib.search_sentiment(SESSION, sentiment=sentiment_)
         except:
             print 'can not find sentiment in db'
-            pass
+            return 'sentiment not found in db, time to die'
         sentiment = sentiment_obj.id
         try:
             review.sentiment_id = sentiment
@@ -144,21 +176,40 @@ def process_reviews():
         neg_revs_string += ' '
         neg_revs_string += str(r.review)
 
-    bushy_pos_obj = BushyPath(pos_revs_string)
-    bushy_positive_summary = bushy_pos_obj.summarize()
 
-    bushy_neg_obj = BushyPath(neg_revs_string)
-    bushy_negative_summary = bushy_neg_obj.summarize()
+    try:
+        bushy_pos_obj = BushyPath(pos_revs_string)
+        bushy_positive_summary = bushy_pos_obj.summarize()
 
-    gr_pos_obj = SummaryUsingGooglePageRank(pos_revs_string)
-    gr_positive_summary = gr_pos_obj.summarize()
+        bushy_neg_obj = BushyPath(neg_revs_string)
+        bushy_negative_summary = bushy_neg_obj.summarize()
+    except:
+        print 'Error finding summary using bushy path'
+        return 'sucks'
 
-    gr_neg_obj = SummaryUsingGooglePageRank(neg_revs_string)
-    gr_negative_summary = gr_neg_obj.summarize()
 
     product = opinator.lib.search_product(SESSION, token=token)
     product.bushy_positive_summary = bushy_positive_summary
     product.bushy_negative_summary = bushy_negative_summary
+
+    try:
+        SESSION.add(product)
+        SESSION.commit()
+    except:
+        SESSION.rollback()
+        print 'Bushy path could not be updated'
+        return 'sucks'
+
+    try:
+        gr_pos_obj = SummaryUsingGooglePageRank(pos_revs_string)
+        gr_positive_summary = gr_pos_obj.summarize()
+
+        gr_neg_obj = SummaryUsingGooglePageRank(neg_revs_string)
+        gr_negative_summary = gr_neg_obj.summarize()
+    except:
+        print 'Error while finding summary using google page rank'
+        return 'sucks'
+
     product.gr_positive_summary = gr_positive_summary
     product.gr_negative_summary = gr_negative_summary
 
@@ -167,8 +218,44 @@ def process_reviews():
         SESSION.commit()
     except:
         SESSION.rollback()
-        print 'Product summaries could not be updated'
+        print 'Google page rank could not be updated to db'
         return 'sucks'
 
     print 'Vivek, You are a champion'
+    send_summary_email(product)
     return 'suck it'
+
+
+def send_summary_email(product):
+    ''' Send the summary via email '''
+    text = """ Dear %s,
+    Thanks for using Opinator.
+    Here is the summary of the reviews:
+    1. Bushy Path - Positive:
+
+        %s
+
+    2. Bushy Path - Negative:
+
+        %s
+
+    3. Google Page Rank Algo - Positive:
+
+        %s
+
+    4. Google Page Rank Algo - Negative:
+
+        %s
+
+
+    Once again, Thanks for using Opinator.
+    """ % (product.email, product.bushy_positive_summary,
+            product.bushy_negative_summary, product.gr_positive_summary,
+            product.gr_negative_summary)
+
+    subject = """[Opinator] Summary of the product reviews"""
+    to_mail = str(product.email)
+    mail_id = APP.config['MAIL_ID']
+
+    opinator.lib.send_email(text, subject, to_mail, mail_id)
+    return
