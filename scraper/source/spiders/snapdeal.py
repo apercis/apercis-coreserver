@@ -1,3 +1,4 @@
+import re
 import requests
 import datetime
 import scrapy.item
@@ -52,10 +53,16 @@ class Snapdeal(scrapy.spiders.CrawlSpider):
         return self.parse_items(response)
 
 
+    def cleanhtml(self, raw_html):
+        cleanr =re.compile('<.*?>')
+        cleantext = re.sub(cleanr,'', raw_html)
+        return cleantext
+
     def parse_items(self, response):
         hxs = scrapy.Selector(response)
         item = source.items.scraperItem()
-        item['reviews'] = self.get_reviews(hxs)
+        html_reviews = self.get_reviews(hxs)
+        item['reviews'] = self.cleanhtml(html_reviews)
         item['is_verified'] = self.is_verified(hxs)
         item['date'] = self.get_date(hxs)
         item['token'] = self.token
