@@ -4,6 +4,7 @@ cssselect
 decorator
 enum34
 Flask
+Flask-WTF
 idna
 ipaddress
 itsdangerous
@@ -17,7 +18,6 @@ pexpect
 pyasn1
 pyasn1-modules
 pycparser
-PyMySQL
 pyOpenSSL
 queuelib
 requests
@@ -25,7 +25,6 @@ Scrapy
 service-identity
 six
 SQLAlchemy
-sqlalchemy-migrate
 sqlparse
 Tempita
 Twisted
@@ -38,4 +37,3 @@ networkx
 numpy
 nltk
 sklearn
-pandas
