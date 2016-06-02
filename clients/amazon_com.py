@@ -2,15 +2,16 @@ import requests
 import json
 
 payload = {
-        'product_id': '0224602799',
+        'product_id': '1408850257',
         'website': 'amazon.in',
         'url': 'xyz',
         'email': 'vivekanand1101@gmail.com',
 }
 
 r = requests.post (
-    "http://172.19.13.41:5000/home",
+    "http://172.17.16.216:5001/home",
     json.dumps(payload),
+    verify=False,
     headers={'Content-Type': 'application/json'}
 )
 

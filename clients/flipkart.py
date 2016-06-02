@@ -9,7 +9,7 @@ payload = {
 }
 
 r = requests.post(
-        "http://172.19.13.41:5000/home",
+        "http://172.17.16.216:5000/home",
         json.dumps(payload),
         headers={'Content-Type': 'application/json'}
 )
