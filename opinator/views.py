@@ -45,13 +45,15 @@ def index():
                     gr_positive_summary = product_.gr_positive_summary
                     gr_negative_summary = product_.gr_negative_summary
                     jsonout = {\
-                            'bushy': {\
-                                'negative': bushy_negative_summary,
-                                'positive': bushy_positive_summary,
-                            },
-                            'google_page_rank': {\
-                                'negative': gr_negative_summary,
-                                'positive': gr_positive_summary,
+                            'summary': {
+                                'bushy': {\
+                                    'negative': bushy_negative_summary,
+                                    'positive': bushy_positive_summary,
+                                },
+                                'google_page_rank': {\
+                                    'negative': gr_negative_summary,
+                                    'positive': gr_positive_summary,
+                                }
                             }
                     }
                     return flask.json.jsonify(jsonout)
@@ -64,13 +66,15 @@ def index():
                     gr_positive_summary = product_.gr_positive_summary
                     gr_negative_summary = product_.gr_negative_summary
                     jsonout = {\
-                            'bushy': {\
-                                'negative': bushy_negative_summary,
-                                'positive': bushy_positive_summary,
-                            },
-                            'google_page_rank': {\
-                                'negative': gr_negative_summary,
-                                'positive': gr_positive_summary,
+                            'summary': {
+                                'bushy': {\
+                                    'negative': bushy_negative_summary,
+                                    'positive': bushy_positive_summary,
+                                },
+                                'google_page_rank': {\
+                                    'negative': gr_negative_summary,
+                                    'positive': gr_positive_summary,
+                                }
                             }
                     }
                     return flask.json.jsonify(jsonout)
@@ -185,7 +189,8 @@ def process_reviews():
         bushy_negative_summary = bushy_neg_obj.summarize()
     except:
         print 'Error finding summary using bushy path'
-        return 'sucks'
+        bushy_positive_summary = None
+        bushy_negative_summary = None
 
 
     product = opinator.lib.search_product(SESSION, token=token)
@@ -198,7 +203,6 @@ def process_reviews():
     except:
         SESSION.rollback()
         print 'Bushy path could not be updated'
-        return 'sucks'
 
     try:
         gr_pos_obj = SummaryUsingGooglePageRank(pos_revs_string)
@@ -208,7 +212,9 @@ def process_reviews():
         gr_negative_summary = gr_neg_obj.summarize()
     except:
         print 'Error while finding summary using google page rank'
-        return 'sucks'
+        gr_positive_summary = None
+        gr_negative_summary = None
+
 
     product.gr_positive_summary = gr_positive_summary
     product.gr_negative_summary = gr_negative_summary
@@ -219,7 +225,6 @@ def process_reviews():
     except:
         SESSION.rollback()
         print 'Google page rank could not be updated to db'
-        return 'sucks'
 
     print 'Vivek, You are a champion'
     send_summary_email(product)
@@ -257,5 +262,6 @@ def send_summary_email(product):
     to_mail = str(product.email)
     mail_id = APP.config['MAIL_ID']
 
-    opinator.lib.send_email(text, subject, to_mail, mail_id)
+    print 'about to call email'
+    #opinator.lib.send_email(text, subject, to_mail, mail_id)
     return

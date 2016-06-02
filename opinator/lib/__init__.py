@@ -8,6 +8,8 @@ import hashlib
 import opinator
 
 from functools import wraps
+from flask_mail import Message
+from opinator import mail
 
 def id_generator(size=15, chars=string.ascii_uppercase + string.digits):
     """ Generates a random identifier for the given size and using the
@@ -35,6 +37,7 @@ def send_email(text, subject, to_mail,
         this value
     '''
     if not to_mail:
+        print 'no mail'
         return
 
     if not opinator.APP.config.get('EMAIL_SEND', True):
@@ -47,28 +50,14 @@ def send_email(text, subject, to_mail,
         print text.encode('utf-8')
         print '*****/EMAIL******'
         return
-
-    try:
-        smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.ehlo()
-        smtpserver.login(mail_id, APP.config['MAIL_PASS'])
-
-        msg = "\r\n".join([
-            "From: %s" % mail_id,
-            "To: %s" % to_mail,
-            "Subject: %s" % subject,
-            "",
-            "%s" % text
-            ])
-
-        smtpserver.sendmail(mail_id, to_mail, msg)
-        smtpserver.close()
-        print 'successfully sent mail'
-    except:
-        print 'failed to send mail'
-
+    #try:
+    sender = opinator.APP.config['MAIL_DEFAULT_SENDER']
+    msg = Message(subject=subject, body=text, reply_to=in_reply_to, sender=sender, recipients=[to_mail])
+    mail.send(msg)
+    print 'mail sent'
+#    except:
+        #print 'Mail could not be sent'
+        #return
 
 def search_product(session, token=None, url=None, product_id=None):
     query = session.query(

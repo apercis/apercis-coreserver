@@ -106,5 +106,5 @@ class AmazonINScraper(scrapy.spiders.CrawlSpider):
     def closed(self, reason):
         ''' Method called when the scraper is closed '''
 
-        a = requests.post('http://172.19.13.41:5000/process_reviews', data={'token': self.token})
+        a = requests.post('http://172.17.16.216:5001/process_reviews', data={'token': self.token})
         return
