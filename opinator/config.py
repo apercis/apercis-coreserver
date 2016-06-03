@@ -14,7 +14,7 @@ WEBSITE_TO_SPIDER = {
 }
 
 #database
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/opinator'
+SQLALCHEMY_DATABASE_URI = 'postgresql://opinator:opinator@localhost:5432/opinator'
 
 #scrapyd settings
 SCRAPYD_URL = 'http://172.17.16.216:6800'
