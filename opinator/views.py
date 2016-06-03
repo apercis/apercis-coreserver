@@ -2,7 +2,7 @@ import os
 import json
 import flask
 import requests
-import pandas as pd
+#import pandas as pd
 from datetime import datetime, timedelta
 
 import opinator
