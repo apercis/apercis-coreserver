@@ -22,7 +22,7 @@ A plugin to do sentiment analysis of reviews in ecommerce website.
 
 ####Database
 * Make changes to `user` and `pass` in [SQLALCHEMY_DATABASE_URI](https://github.com/vivekanand1101/opinator-coreserver/blob/master/opinator/config.py#L17)
-* Create a mysql database named `opinator`
+* Create a postgres database named `opinator`
 * [Grant all privileges to the user to this database](http://stackoverflow.com/questions/5016505/mysql-grant-all-privileges-on-database/5016587#5016587)
 * Run [createdb.py](https://github.com/vivekanand1101/opinator-coreserver/blob/master/createdb.py)
 
